@@ -1,0 +1,12 @@
+name: Runner-ping
+on: [workflow_dispatch]
+
+jobs:
+  ping:
+    runs-on: [self-hosted]
+    steps:
+      - name: Say hello
+        run: |
+          echo "✅  Runner online on $HOSTNAME"
+          uname -a
+
