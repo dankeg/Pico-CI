@@ -44,14 +44,15 @@ jobs:
 
     # 6. Reboot to BOOTSEL & flash
     - name: Flash UF2
-      timeout-minutes: 2
+      timeout-minutes: 3
       run: |
         set -euo pipefail
-        picotool reboot -f -u || true
-        echo "⏳  Waiting for BOOTSEL…"
-        until lsusb | grep -q '2e8a:0003'; do sleep 0.2; done
-        picotool load --force -v build/blink.uf2
-        echo "✅ Flash complete"
+        sudo picotool reboot -f -u || true
+        sleep 5
+        picotool info
+        sleep 10
+        sudo picotool load --force -v build/main.uf2 && picotool reboot -f
+        # echo "✅ Flash complete"
 
     # 7. Stream UART for 30 s
     - name: Capture UART (30 s)
