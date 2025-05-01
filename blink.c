@@ -1,11 +1,10 @@
 #include "pico/stdlib.h"
 
-// On a Pico this is GPIO 25; adjust for other RP2040 boards
 const uint LED_PIN = 25;
 
 int main(void)
 {
-    stdio_init_all();           // optional, for UART prints
+    stdio_init_all();
     gpio_init(LED_PIN);
     gpio_set_dir(LED_PIN, GPIO_OUT);
 

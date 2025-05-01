@@ -1,5 +1,4 @@
-# Build-Flash-Pico ─ CI/CD pipeline
-name: Build-Flash-Pico
+name: Build & Flash Pico
 
 on:
   push:
@@ -7,64 +6,56 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-flash:
-    name: Build, flash and stream UART
-    runs-on: self-hosted            # runner with Pico attached
+  flash:
+    name: Build, Flash & UART
+    runs-on: self-hosted
 
     defaults:
       run:
         shell: bash
 
     steps:
-    # 1. Source
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    # 2. Export PICO variables for the rest of the job
-    - name: Set SDK env vars
-      run: |
-        echo "PICO_SDK_PATH=$HOME/pico-sdk" >> "$GITHUB_ENV"
-        echo "PICO_BOARD=pico"              >> "$GITHUB_ENV"
+      - name: Set environment variables
+        run: |
+          echo "PICO_SDK_PATH=$HOME/pico-sdk" >> "$GITHUB_ENV"
+          echo "PICO_BOARD=pico" >> "$GITHUB_ENV"
 
-    # 3. Configure CMake (out-of-source)
-    - name: Configure
-      run: cmake -S . -B build \
-                 -DPICO_SDK_PATH="$PICO_SDK_PATH" \
-                 -DPICO_BOARD="$PICO_BOARD"
+      - name: Configure & build
+        run: |
+          cmake -S . -B build \
+            -DPICO_SDK_PATH="$PICO_SDK_PATH" \
+            -DPICO_BOARD="$PICO_BOARD"
+          cmake --build build -- -j"$(nproc)"
 
-    # 4. Compile with make
-    - name: Compile
-      run: cmake --build build -- -j"$(nproc)"
+      - name: Upload firmware artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: pico-firmware
+          path: build/*.uf2
 
-    # 5. Upload UF2 artifact (optional but handy)
-    - name: Upload firmware
-      uses: actions/upload-artifact@v4
-      with:
-        name: pico-firmware
-        path: build/*.uf2
+      - name: Flash firmware
+        timeout-minutes: 3
+        run: |
+          set -euo pipefail
+          sudo picotool reboot -f -u || true
+          sleep 5
+          picotool info
+          sleep 10
+          sudo picotool load --force -v build/main.uf2
+          picotool reboot -f || true
 
-    # 6. Reboot to BOOTSEL & flash
-    - name: Flash UF2
-      timeout-minutes: 3
-      run: |
-        set -euo pipefail
-        sudo picotool reboot -f -u || true
-        sleep 5
-        picotool info
-        sleep 10
-        sudo picotool load --force -v build/main.uf2 && picotool reboot -f
-        # echo "✅ Flash complete"
+      - name: Capture UART output
+        run: |
+          set -euo pipefail
+          for i in {1..50}; do
+            [ -e /dev/ttyACM0 ] && break || sleep 0.2
+          done
+          stty -F /dev/ttyACM0 raw 115200 -echo
+          echo "::group::UART Output"
+          timeout 30s cat /dev/ttyACM0 || true
+          echo "::endgroup::"
 
-    # 7. Stream UART for 30 s
-    - name: Capture UART (30 s)
-      run: |
-        set -euo pipefail
-        echo "⏳  Waiting for /dev/ttyACM0…"
-        for _ in {1..50}; do [ -e /dev/ttyACM0 ] && break || sleep 0.2; done
-        stty -F /dev/ttyACM0 raw 115200 -echo
-        echo "::group::UART"
-        stdbuf -oL timeout 30s cat /dev/ttyACM0 || true
-        echo "::endgroup::"
-
-    # 8. Job summary
-    - name: Summary
-      run: echo "✅ Build, flash and UART capture completed on $HOSTNAME"
+      - name: Summary
+        run: echo "✅ Completed on $HOSTNAME"
