@@ -19,3 +19,21 @@ Run the script to perform the setup `./runner_setup.sh`.
 Navigating back to Settings, Actions, Runner, you should now see that the runner is online!
 This repo provides sample workflow files which demonstrate pinging the runner, and using it to build & flash code for the Pico, and subsequently monitor it. 
 These are currently set to be manually activable, & run upon pushing to any branch. 
+
+# Future Extensions
+The following is a list of potential modifications and features. If you're interested in developing any of these, contact Ganesh or someone from Project Horizon, and we can discuss next steps in greater detail. 
+- Dockerize build environments to ensure a cleaner setup that enables concurrent jobs 
+    - Integrate [PicoSDK Devcontainer](https://github.com/NU-Horizonsat/pico-sdk-template)
+    - Integrate [Zephyr Devcontainer](https://github.com/zephyrproject-rtos/docker-image) 
+    - Integrate [F'Prime Devcontainer](https://github.com/fprime-community/fprime-docker/tree/devel)
+- Integrate Raspberry Pi GPIO Utilization
+    - Enable hard-resets using the Pico Reset Pin
+    - Integrate basic external temperature monitoring 
+    - Integrate basic LoRa transmission/reception 
+    - Other external probing and validation, as it becomes relevant
+- Other Devices
+    - Integrate flashing using a hardware debugger, such as a J-Link, Raspberry Pi Debug Probe, etc.
+    - Integrate flashing RT1050 based boards, such as the Payload Board & [Arch Mix](https://www.seeedstudio.com/Arch-Mix-p-2901.html?srsltid=AfmBOoobFxhTZL7-anU2D6zFEJh4VMdzgBNCDeRyTfGmM7_G4sYXSwcT)
+    - Integrate flashing the BeagleBone Black
+    - Integrate flashing Raspberry Pi Single Board Computer models 
+
